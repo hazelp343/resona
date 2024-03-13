@@ -1,0 +1,11 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "resona"
+version = "0.0.0"
+description = "Lightweight, NumPy-first toolkit for audio embeddings and sound-event detection"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
