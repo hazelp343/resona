@@ -9,3 +9,39 @@ description = "Lightweight, NumPy-first toolkit for audio embeddings and sound-e
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
+authors = [{ name = "Mingyan Yang", email = "292125771+hazelp343@users.noreply.github.com" }]
+keywords = ["audio", "embeddings", "sound-event-detection", "sed", "mfcc", "spectrogram"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Multimedia :: Sound/Audio :: Analysis",
+  "Topic :: Scientific/Engineering",
+  "Typing :: Typed",
+]
+dependencies = ["numpy>=1.22"]
+
+[project.optional-dependencies]
+soundfile = ["soundfile>=0.12"]
+dev = [
+  "pytest>=7.0",
+  "pytest-cov>=4.0",
+  "ruff>=0.4",
+  "mypy>=1.8",
+  "pre-commit>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/hazelp343/resona"
+Repository = "https://github.com/hazelp343/resona"
+Issues = "https://github.com/hazelp343/resona/issues"
+Changelog = "https://github.com/hazelp343/resona/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["resona"]
