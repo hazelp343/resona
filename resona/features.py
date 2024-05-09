@@ -54,3 +54,37 @@ def stft(
     if frames.shape[0] == 0:
         return np.empty((0, n_fft // 2 + 1), dtype=np.complex128)
     return np.fft.rfft(frames * win, n=n_fft, axis=1).astype(np.complex128)
+
+
+def magnitude(spectrum: ComplexArray) -> FloatArray:
+    """Element-wise magnitude ``|z|`` of a complex spectrum."""
+    return np.abs(np.asarray(spectrum)).astype(np.float64)
+
+
+def spectrogram(
+    signal: FloatArray,
+    *,
+    n_fft: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    window: str = "hann",
+    center: bool = True,
+    power: float = 2.0,
+) -> FloatArray:
+    """Magnitude (``power=1``) or power (``power=2``) spectrogram.
+
+    Shape is ``(n_frames, n_fft // 2 + 1)``.
+    """
+    if power <= 0:
+        raise InvalidParameterError("power must be positive")
+    mag = magnitude(
+        stft(
+            signal,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            window=window,
+            center=center,
+        )
+    )
+    if power == 1.0:
+        return mag
+    return mag**power
