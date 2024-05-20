@@ -100,3 +100,47 @@ def mel_to_hz(mels: FloatArray | float) -> FloatArray:
     """Inverse of :func:`hz_to_mel` (HTK mel scale)."""
     mel = np.asarray(mels, dtype=np.float64)
     return 700.0 * (10.0 ** (mel / 2595.0) - 1.0)
+
+
+def mel_filterbank(
+    sr: int,
+    n_fft: int,
+    *,
+    n_mels: int = DEFAULT_N_MELS,
+    fmin: float = 0.0,
+    fmax: float | None = None,
+    norm: bool = True,
+) -> FloatArray:
+    """Build a triangular mel filterbank of shape ``(n_mels, n_fft // 2 + 1)``.
+
+    Each row is a triangular band-pass filter whose centre frequencies are
+    equally spaced on the mel scale. With ``norm=True`` filters use Slaney-style
+    area normalisation so that wide, high-frequency bands are not over-weighted.
+    """
+    if fmax is None:
+        fmax = sr / 2.0
+    if not 0.0 <= fmin < fmax <= sr / 2.0:
+        raise InvalidParameterError(
+            f"require 0 <= fmin < fmax <= sr/2; got fmin={fmin}, fmax={fmax}, sr={sr}"
+        )
+    if n_mels <= 0:
+        raise InvalidParameterError("n_mels must be positive")
+
+    n_bins = n_fft // 2 + 1
+    fft_freqs = np.fft.rfftfreq(n_fft, d=1.0 / sr)
+
+    mel_edges = np.linspace(hz_to_mel(fmin), hz_to_mel(fmax), n_mels + 2)
+    hz_edges = mel_to_hz(mel_edges)
+    fdiff = np.diff(hz_edges)
+    ramps = hz_edges[:, np.newaxis] - fft_freqs[np.newaxis, :]
+
+    weights = np.zeros((n_mels, n_bins), dtype=np.float64)
+    for m in range(n_mels):
+        lower = -ramps[m] / fdiff[m]
+        upper = ramps[m + 2] / fdiff[m + 1]
+        weights[m] = np.maximum(0.0, np.minimum(lower, upper))
+
+    if norm:
+        enorm = 2.0 / (hz_edges[2 : n_mels + 2] - hz_edges[:n_mels])
+        weights *= enorm[:, np.newaxis]
+    return weights
