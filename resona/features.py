@@ -232,3 +232,35 @@ def mfcc(
     )
     basis = dct_matrix(n_mels, n_mfcc)
     return log_mel @ basis.T
+
+
+def delta(features: FloatArray, *, width: int = 9, order: int = 1) -> FloatArray:
+    """Local-regression delta (derivative) features along the time axis.
+
+    ``features`` is ``(n_frames, n_dims)``. The estimate at frame ``t`` is the
+    slope of a least-squares line fit over a window of ``width`` frames centred
+    on ``t``; edges are handled by replicating the boundary frames. Higher
+    ``order`` applies the operator repeatedly (delta-delta, ...).
+    """
+    if width < 3 or width % 2 == 0:
+        raise InvalidParameterError("width must be an odd integer >= 3")
+    if order < 1:
+        raise InvalidParameterError("order must be >= 1")
+
+    out = np.asarray(features, dtype=np.float64)
+    if out.ndim != 2:
+        raise InvalidParameterError("features must be a 2-D (n_frames, n_dims) array")
+
+    half = width // 2
+    denom = 2.0 * sum(n * n for n in range(1, half + 1))
+    for _ in range(order):
+        padded = np.pad(out, ((half, half), (0, 0)), mode="edge")
+        n_frames = out.shape[0]
+        result = np.zeros_like(out)
+        for n in range(1, half + 1):
+            result += n * (
+                padded[half + n : half + n + n_frames]
+                - padded[half - n : half - n + n_frames]
+            )
+        out = result / denom
+    return out
