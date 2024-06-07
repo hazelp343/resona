@@ -264,3 +264,65 @@ def delta(features: FloatArray, *, width: int = 9, order: int = 1) -> FloatArray
             )
         out = result / denom
     return out
+
+
+def _mag_and_freqs(
+    signal: FloatArray,
+    sr: int,
+    n_fft: int,
+    hop_length: int,
+    window: str,
+    center: bool,
+) -> tuple[FloatArray, FloatArray]:
+    """Magnitude spectrogram ``(n_frames, n_bins)`` and its bin frequencies."""
+    mag = spectrogram(
+        signal,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        window=window,
+        center=center,
+        power=1.0,
+    )
+    freqs = np.fft.rfftfreq(n_fft, d=1.0 / sr)
+    return mag, freqs
+
+
+def spectral_centroid(
+    signal: FloatArray,
+    sr: int,
+    *,
+    n_fft: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    window: str = "hann",
+    center: bool = True,
+) -> FloatArray:
+    """Per-frame spectral centroid in hertz, shape ``(n_frames,)``.
+
+    The centroid is the magnitude-weighted mean frequency -- a robust proxy for
+    perceived brightness.
+    """
+    mag, freqs = _mag_and_freqs(signal, sr, n_fft, hop_length, window, center)
+    total = mag.sum(axis=1)
+    safe = np.where(total > 0.0, total, 1.0)
+    return (mag @ freqs) / safe
+
+
+def spectral_bandwidth(
+    signal: FloatArray,
+    sr: int,
+    *,
+    n_fft: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    window: str = "hann",
+    center: bool = True,
+    p: float = 2.0,
+) -> FloatArray:
+    """Per-frame spectral bandwidth (the ``p``-th order spread about the centroid)."""
+    if p <= 0:
+        raise InvalidParameterError("p must be positive")
+    mag, freqs = _mag_and_freqs(signal, sr, n_fft, hop_length, window, center)
+    total = mag.sum(axis=1)
+    safe = np.where(total > 0.0, total, 1.0)
+    centroid = (mag @ freqs) / safe
+    deviation = np.abs(freqs[np.newaxis, :] - centroid[:, np.newaxis]) ** p
+    return ((mag * deviation).sum(axis=1) / safe) ** (1.0 / p)
