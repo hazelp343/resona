@@ -394,3 +394,46 @@ def spectral_flux(
     diff = np.diff(normed, axis=0)
     flux = np.sqrt((diff**2).sum(axis=1))
     return np.concatenate([[0.0], flux])
+
+
+def _frame_for_stats(
+    signal: FloatArray, frame_length: int, hop_length: int, center: bool
+) -> FloatArray:
+    sig = np.asarray(signal, dtype=np.float64)
+    if center:
+        sig = np.pad(sig, frame_length // 2, mode="constant")
+    return frame_signal(sig, frame_length, hop_length, pad=True)
+
+
+def zero_crossing_rate(
+    signal: FloatArray,
+    *,
+    frame_length: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    center: bool = True,
+) -> FloatArray:
+    """Per-frame rate of sign changes, shape ``(n_frames,)``.
+
+    A cheap but surprisingly informative discriminator between voiced/tonal and
+    noisy/percussive content.
+    """
+    frames = _frame_for_stats(signal, frame_length, hop_length, center)
+    if frames.shape[0] == 0:
+        return np.empty((0,), dtype=np.float64)
+    signs = np.signbit(frames)
+    crossings = np.abs(np.diff(signs.astype(np.int_), axis=1)).sum(axis=1)
+    return crossings / float(frame_length)
+
+
+def rms(
+    signal: FloatArray,
+    *,
+    frame_length: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    center: bool = True,
+) -> FloatArray:
+    """Per-frame root-mean-square amplitude, shape ``(n_frames,)``."""
+    frames = _frame_for_stats(signal, frame_length, hop_length, center)
+    if frames.shape[0] == 0:
+        return np.empty((0,), dtype=np.float64)
+    return np.sqrt(np.mean(frames**2, axis=1))
