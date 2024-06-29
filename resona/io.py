@@ -70,3 +70,23 @@ def to_mono(signal: FloatArray) -> FloatArray:
     if x.ndim == 2:
         return x.mean(axis=1)
     raise InvalidParameterError("signal must be 1-D or 2-D (n_samples, n_channels)")
+
+
+def resample(signal: FloatArray, sr_in: int, sr_out: int) -> FloatArray:
+    """Resample a mono signal from ``sr_in`` to ``sr_out`` by linear interpolation.
+
+    Linear interpolation is cheap and dependency-free; it is good enough for
+    feature extraction, though not for high-fidelity playback. Pass a 1-D array.
+    """
+    x = np.asarray(signal, dtype=np.float64)
+    if x.ndim != 1:
+        raise InvalidParameterError("resample expects a 1-D signal; downmix first")
+    if sr_in <= 0 or sr_out <= 0:
+        raise InvalidParameterError("sample rates must be positive")
+    if sr_in == sr_out or x.size == 0:
+        return x
+
+    n_out = int(round(x.size * sr_out / sr_in))
+    t_old = np.arange(x.size, dtype=np.float64) / float(sr_in)
+    t_new = np.arange(n_out, dtype=np.float64) / float(sr_out)
+    return np.interp(t_new, t_old, x)
