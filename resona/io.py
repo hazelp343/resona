@@ -7,6 +7,7 @@ enough to read and write uncompressed PCM WAV files. Anything else (FLAC, OGG,
 
 from __future__ import annotations
 
+import os
 import wave
 
 import numpy as np
@@ -90,3 +91,48 @@ def resample(signal: FloatArray, sr_in: int, sr_out: int) -> FloatArray:
     t_old = np.arange(x.size, dtype=np.float64) / float(sr_in)
     t_new = np.arange(n_out, dtype=np.float64) / float(sr_out)
     return np.interp(t_new, t_old, x)
+
+
+def _read_soundfile(path: str) -> tuple[FloatArray, int]:
+    """Read a non-WAV file through the optional ``soundfile`` dependency."""
+    try:
+        import soundfile as sf
+    except ImportError as exc:  # pragma: no cover - exercised only without soundfile
+        raise AudioIOError(
+            f"reading {path!r} requires the optional 'soundfile' dependency; "
+            "install resona[soundfile] or convert the file to WAV first"
+        ) from exc
+    try:
+        data, sr = sf.read(str(path), dtype="float64", always_2d=True)
+    except RuntimeError as exc:
+        raise AudioIOError(f"could not read audio file {path!r}: {exc}") from exc
+    return np.asarray(data, dtype=np.float64), int(sr)
+
+
+def load_audio(
+    path: str, *, sr: int | None = None, mono: bool = True
+) -> tuple[FloatArray, int]:
+    """Load an audio file, optionally downmixing to mono and resampling.
+
+    WAV files are decoded with the standard library; everything else is routed
+    through :mod:`soundfile` if it is installed. Returns ``(signal, sample_rate)``.
+    """
+    path = str(path)
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".wav":
+        data, native_sr = read_wav(path)
+    else:
+        data, native_sr = _read_soundfile(path)
+
+    if mono:
+        data = to_mono(data)
+
+    if sr is not None and sr != native_sr:
+        if data.ndim == 1:
+            data = resample(data, native_sr, sr)
+        else:
+            channels = [resample(data[:, c], native_sr, sr) for c in range(data.shape[1])]
+            data = np.stack(channels, axis=1)
+        native_sr = sr
+
+    return data, native_sr
