@@ -136,3 +136,30 @@ def load_audio(
         native_sr = sr
 
     return data, native_sr
+
+
+def write_wav(path: str, signal: FloatArray, sr: int) -> None:
+    """Write a signal to a 16-bit PCM WAV file.
+
+    ``signal`` may be 1-D (mono) or 2-D ``(n_samples, n_channels)``. Samples are
+    clipped to ``[-1, 1]`` before quantisation.
+    """
+    x = np.asarray(signal, dtype=np.float64)
+    if x.ndim == 1:
+        x = x[:, np.newaxis]
+    elif x.ndim != 2:
+        raise InvalidParameterError("signal must be 1-D or 2-D (n_samples, n_channels)")
+    if sr <= 0:
+        raise InvalidParameterError("sample rate must be positive")
+
+    n_channels = x.shape[1]
+    clipped = np.clip(x, -1.0, 1.0)
+    ints = np.round(clipped * 32767.0).astype("<i2")
+    try:
+        with wave.open(str(path), "wb") as wf:
+            wf.setnchannels(n_channels)
+            wf.setsampwidth(2)
+            wf.setframerate(int(sr))
+            wf.writeframes(ints.reshape(-1).tobytes())
+    except (wave.Error, OSError) as exc:
+        raise AudioIOError(f"could not write WAV file {path!r}: {exc}") from exc
