@@ -38,9 +38,15 @@ def create_embedder(name: str, **kwargs: Any) -> BaseEmbedder:
     return get_embedder(name)(**kwargs)
 
 
+from .logmel import LogMelStatsEmbedder  # noqa: E402  (registered below)
+
+register(LogMelStatsEmbedder)
+
+
 __all__ = [
     "BaseEmbedder",
     "Embedding",
+    "LogMelStatsEmbedder",
     "available_embedders",
     "create_embedder",
     "get_embedder",
