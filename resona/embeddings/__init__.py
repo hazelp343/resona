@@ -40,9 +40,11 @@ def create_embedder(name: str, **kwargs: Any) -> BaseEmbedder:
 
 from .logmel import LogMelStatsEmbedder  # noqa: E402  (registered below)
 from .mfcc import MFCCEmbedder  # noqa: E402
+from .spectral import SpectralEmbedder  # noqa: E402
 
 register(LogMelStatsEmbedder)
 register(MFCCEmbedder)
+register(SpectralEmbedder)
 
 
 __all__ = [
@@ -50,6 +52,7 @@ __all__ = [
     "Embedding",
     "LogMelStatsEmbedder",
     "MFCCEmbedder",
+    "SpectralEmbedder",
     "available_embedders",
     "create_embedder",
     "get_embedder",
