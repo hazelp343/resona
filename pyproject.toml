@@ -37,6 +37,9 @@ dev = [
   "pre-commit>=3.0",
 ]
 
+[project.scripts]
+resona = "resona.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/hazelp343/resona"
 Repository = "https://github.com/hazelp343/resona"
