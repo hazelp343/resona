@@ -73,6 +73,9 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
     scores = evaluate(reference, estimated, mode=args.mode, **extra)
     print(json.dumps(scores, indent=2))
     return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
     """Construct the top-level argument parser."""
     parser = argparse.ArgumentParser(
         prog="resona",
