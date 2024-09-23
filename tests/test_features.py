@@ -47,3 +47,55 @@ def test_power_to_db_peak_is_zero_with_max_ref() -> None:
 def test_spectral_centroid_tracks_tone(tone_signal: np.ndarray, sr: int) -> None:
     centroid = features.spectral_centroid(tone_signal, sr, n_fft=2048, hop_length=512)
     assert np.median(centroid) == pytest.approx(440.0, abs=30.0)
+
+
+def test_mfcc_shape(tone_signal: np.ndarray, sr: int) -> None:
+    coeffs = features.mfcc(tone_signal, sr, n_mfcc=13, n_fft=1024, hop_length=256, n_mels=40)
+    assert coeffs.shape[1] == 13
+
+
+def test_delta_shape_matches_input(tone_signal: np.ndarray, sr: int) -> None:
+    coeffs = features.mfcc(tone_signal, sr, n_mfcc=13, n_fft=1024, hop_length=256, n_mels=40)
+    assert features.delta(coeffs).shape == coeffs.shape
+
+
+def test_delta_of_linear_ramp_is_constant() -> None:
+    ramp = np.linspace(0.0, 1.0, 50)[:, np.newaxis]
+    deltas = features.delta(ramp, width=5)
+    # Away from the replicated edges the slope estimate is constant.
+    assert np.std(deltas[3:-3]) < 1e-9
+
+
+def test_delta_rejects_even_width() -> None:
+    with pytest.raises(features.InvalidParameterError):
+        features.delta(np.zeros((10, 2)), width=8)
+
+
+def test_spectral_flatness_in_unit_range(tone_signal: np.ndarray) -> None:
+    flat = features.spectral_flatness(tone_signal, n_fft=1024, hop_length=256)
+    assert np.all(flat >= 0.0)
+    assert np.all(flat <= 1.0 + 1e-9)
+
+
+def test_noise_is_flatter_than_tone(sr: int) -> None:
+    rng = np.random.default_rng(0)
+    noise = rng.standard_normal(sr)
+    t = np.arange(sr, dtype=np.float64) / sr
+    tone = np.sin(2.0 * np.pi * 440.0 * t)
+    assert np.median(features.spectral_flatness(noise)) > np.median(
+        features.spectral_flatness(tone)
+    )
+
+
+def test_rolloff_below_nyquist(tone_signal: np.ndarray, sr: int) -> None:
+    rolloff = features.spectral_rolloff(tone_signal, sr, n_fft=1024, hop_length=256)
+    assert np.all(rolloff <= sr / 2 + 1e-6)
+
+
+def test_zcr_and_rms(tone_signal: np.ndarray) -> None:
+    zcr = features.zero_crossing_rate(tone_signal, frame_length=1024, hop_length=256)
+    level = features.rms(tone_signal, frame_length=1024, hop_length=256)
+    assert zcr.ndim == 1
+    assert level.ndim == 1
+    # RMS of a half-amplitude sine is 0.5 / sqrt(2).
+    assert np.median(level) == pytest.approx(0.5 / np.sqrt(2), abs=0.05)
