@@ -3,7 +3,9 @@ import pytest
 
 from resona.detection import events as ev
 from resona.detection import postprocess as pp
+from resona.detection.energy import EnergyDetector
 from resona.detection.events import Event
+from resona.detection.threshold import ThresholdDetector
 from resona.exceptions import InvalidParameterError
 
 
@@ -65,3 +67,30 @@ def test_activations_to_events_basic() -> None:
     events = pp.activations_to_events(activations, ["x"], sr=100, hop_length=1, threshold=0.5)
     assert len(events) == 1
     assert events[0].label == "x"
+
+
+def test_energy_detector_finds_burst(sr: int) -> None:
+    t = np.arange(2 * sr, dtype=np.float64) / sr
+    signal = np.zeros_like(t)
+    burst = slice(sr, int(1.5 * sr))
+    signal[burst] = 0.6 * np.sin(2.0 * np.pi * 440.0 * t[burst])
+    detector = EnergyDetector(threshold=0.3, n_fft=1024, hop_length=256, min_duration_on=0.05)
+
+    events = detector.detect(signal, sr)
+    assert len(events) == 1
+    assert events[0].label == "active"
+    assert events[0].onset == pytest.approx(1.0, abs=0.1)
+    assert events[0].offset == pytest.approx(1.5, abs=0.1)
+
+
+def test_energy_detector_handles_empty_signal(sr: int) -> None:
+    assert EnergyDetector().detect(np.zeros(0), sr) == []
+
+
+def test_threshold_detector_multilabel() -> None:
+    activations = np.zeros((40, 2))
+    activations[5:15, 0] = 0.8
+    activations[20:30, 1] = 0.9
+    detector = ThresholdDetector(threshold=0.5)
+    events = detector.detect(activations, labels=["a", "b"], sr=100, hop_length=1)
+    assert sorted(event.label for event in events) == ["a", "b"]
