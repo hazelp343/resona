@@ -7,10 +7,15 @@ extractors can then transform one frame at a time.
 
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 
 from ._typing import FloatArray, IntArray
 from .exceptions import InvalidParameterError
+
+# Padding modes accepted by :func:`frame_signal` (a subset of ``numpy.pad``).
+PadMode = Literal["constant", "edge", "reflect", "wrap", "symmetric"]
 
 # Window tapers we know how to build. ``get_window`` is the public entry point;
 # the names mirror the ones used by scipy/librosa so call sites stay familiar.
@@ -86,7 +91,7 @@ def frame_signal(
     hop_length: int,
     *,
     pad: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: PadMode = "constant",
 ) -> FloatArray:
     """Split ``signal`` into overlapping frames.
 
