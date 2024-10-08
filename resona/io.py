@@ -87,7 +87,9 @@ def resample(signal: FloatArray, sr_in: int, sr_out: int) -> FloatArray:
     if sr_in == sr_out or x.size == 0:
         return x
 
-    n_out = int(round(x.size * sr_out / sr_in))
+    # Clamp to at least one output sample so a very short clip never collapses
+    # to an empty array when downsampling.
+    n_out = max(1, int(round(x.size * sr_out / sr_in)))
     t_old = np.arange(x.size, dtype=np.float64) / float(sr_in)
     t_new = np.arange(n_out, dtype=np.float64) / float(sr_out)
     return np.interp(t_new, t_old, x)
