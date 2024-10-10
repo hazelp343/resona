@@ -11,6 +11,7 @@ from importlib import metadata as _metadata
 from . import datasets, features, metrics
 from .detection.energy import EnergyDetector
 from .detection.events import Event, events_to_roll, roll_to_events
+from .detection.eventio import load_events, save_events
 from .detection.threshold import ThresholdDetector
 from .embeddings import (
     Embedding,
@@ -21,7 +22,6 @@ from .embeddings import (
 from .embeddings.logmel import LogMelStatsEmbedder
 from .embeddings.mfcc import MFCCEmbedder
 from .embeddings.spectral import SpectralEmbedder
-from .eventio import load_events, save_events
 from .exceptions import (
     AudioIOError,
     InvalidParameterError,

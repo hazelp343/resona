@@ -2,7 +2,7 @@ from resona import detect_events, evaluate, extract_embedding
 from resona.cli import build_parser, main
 from resona.datasets import Scene
 from resona.detection.events import Event
-from resona.eventio import save_events
+from resona.detection.eventio import save_events
 from resona.io import write_wav
 
 
