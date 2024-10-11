@@ -7,7 +7,6 @@ import json
 
 import numpy as np
 
-from .detection.events import Event
 from .detection.eventio import load_events, save_events
 from .embeddings import available_embedders
 from .io import load_audio
