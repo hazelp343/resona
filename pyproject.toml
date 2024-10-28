@@ -65,7 +65,6 @@ select = ["E", "F", "I", "B", "UP", "C4", "SIM", "RUF", "NPY"]
 quote-style = "double"
 
 [tool.mypy]
-python_version = "3.9"
 warn_redundant_casts = true
 warn_unused_configs = true
 disallow_untyped_defs = true
