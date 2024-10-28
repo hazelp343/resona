@@ -56,18 +56,14 @@ def get_window(name: str, length: int, *, periodic: bool = True) -> FloatArray:
         return 0.54 - 0.46 * np.cos(2.0 * np.pi * n / denom)
     if key == "blackman":
         return (
-            0.42
-            - 0.5 * np.cos(2.0 * np.pi * n / denom)
-            + 0.08 * np.cos(4.0 * np.pi * n / denom)
+            0.42 - 0.5 * np.cos(2.0 * np.pi * n / denom) + 0.08 * np.cos(4.0 * np.pi * n / denom)
         )
     raise InvalidParameterError(
         f"unknown window {name!r}; choose one of {', '.join(_WINDOW_NAMES)}"
     )
 
 
-def num_frames(
-    n_samples: int, frame_length: int, hop_length: int, *, pad: bool = True
-) -> int:
+def num_frames(n_samples: int, frame_length: int, hop_length: int, *, pad: bool = True) -> int:
     """Number of frames produced by :func:`frame_signal`.
 
     With ``pad=False`` only complete frames are counted. With ``pad=True`` the
@@ -120,9 +116,7 @@ def frame_signal(
 
     # Build the frames with a strided view, then copy so callers can mutate.
     strides = (signal.strides[0] * hop_length, signal.strides[0])
-    frames = np.lib.stride_tricks.as_strided(
-        signal, shape=(count, frame_length), strides=strides
-    )
+    frames = np.lib.stride_tricks.as_strided(signal, shape=(count, frame_length), strides=strides)
     return np.array(frames, dtype=np.float64)
 
 
@@ -136,16 +130,12 @@ def samples_to_frames(samples: IntArray | int, hop_length: int) -> IntArray:
     return np.atleast_1d(np.asarray(samples)).astype(np.int_) // int(hop_length)
 
 
-def frames_to_time(
-    frames: IntArray | int, sr: int, hop_length: int
-) -> FloatArray:
+def frames_to_time(frames: IntArray | int, sr: int, hop_length: int) -> FloatArray:
     """Map frame indices to the start time (seconds) of each frame."""
     return frames_to_samples(frames, hop_length).astype(np.float64) / float(sr)
 
 
-def time_to_frames(
-    times: FloatArray | float, sr: int, hop_length: int
-) -> IntArray:
+def time_to_frames(times: FloatArray | float, sr: int, hop_length: int) -> IntArray:
     """Map times (seconds) to the index of the frame that contains them."""
     samples = np.atleast_1d(np.asarray(times, dtype=np.float64)) * float(sr)
     return np.floor(samples / float(hop_length)).astype(np.int_)

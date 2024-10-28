@@ -113,9 +113,7 @@ def segment_based_metrics(
     }
 
 
-def _events_match(
-    ref: Event, est: Event, t_collar: float, percentage_of_length: float
-) -> bool:
+def _events_match(ref: Event, est: Event, t_collar: float, percentage_of_length: float) -> bool:
     """Whether ``est`` matches ``ref`` under the onset collar and offset tolerance."""
     onset_ok = abs(ref.onset - est.onset) <= t_collar
     offset_tolerance = max(t_collar, percentage_of_length * ref.duration)
@@ -177,7 +175,11 @@ def event_based_metrics(
         n_ref += len(ref_events)
         n_sys += len(sys_events)
         adjacency = [
-            [j for j, s in enumerate(sys_events) if _events_match(r, s, t_collar, percentage_of_length)]
+            [
+                j
+                for j, s in enumerate(sys_events)
+                if _events_match(r, s, t_collar, percentage_of_length)
+            ]
             for r in ref_events
         ]
         n_correct += _max_bipartite_matching(adjacency, len(sys_events))

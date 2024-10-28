@@ -10,8 +10,8 @@ from importlib import metadata as _metadata
 
 from . import datasets, features, metrics
 from .detection.energy import EnergyDetector
-from .detection.events import Event, events_to_roll, roll_to_events
 from .detection.eventio import load_events, save_events
+from .detection.events import Event, events_to_roll, roll_to_events
 from .detection.threshold import ThresholdDetector
 from .embeddings import (
     Embedding,
@@ -39,8 +39,8 @@ except _metadata.PackageNotFoundError:  # pragma: no cover - running from a sour
 
 __all__ = [
     "AudioIOError",
-    "EnergyDetector",
     "Embedding",
+    "EnergyDetector",
     "Event",
     "InvalidParameterError",
     "LogMelStatsEmbedder",
@@ -49,6 +49,7 @@ __all__ = [
     "SpectralEmbedder",
     "ThresholdDetector",
     "UnknownComponentError",
+    "__version__",
     "available_embedders",
     "create_embedder",
     "datasets",
@@ -67,5 +68,4 @@ __all__ = [
     "save_events",
     "segment_based_metrics",
     "write_wav",
-    "__version__",
 ]
