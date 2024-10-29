@@ -1,5 +1,4 @@
 import pytest
-
 from resona.detection.events import Event
 from resona.exceptions import InvalidParameterError
 from resona.metrics import error_rate, event_based_metrics, segment_based_metrics

@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from resona.detection import events as ev
 from resona.detection import postprocess as pp
 from resona.detection.energy import EnergyDetector

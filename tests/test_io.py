@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from resona import io
 from resona.exceptions import AudioIOError
 
@@ -18,7 +17,9 @@ def test_wav_roundtrip(tmp_path, tone_signal: np.ndarray, sr: int) -> None:
 
 def test_load_audio_downmix_and_resample(tmp_path, sr: int) -> None:
     t = np.arange(sr, dtype=np.float64) / sr
-    stereo = np.stack([0.3 * np.sin(2 * np.pi * 200 * t), 0.3 * np.sin(2 * np.pi * 400 * t)], axis=1)
+    stereo = np.stack(
+        [0.3 * np.sin(2 * np.pi * 200 * t), 0.3 * np.sin(2 * np.pi * 400 * t)], axis=1
+    )
     path = tmp_path / "stereo.wav"
     io.write_wav(str(path), stereo, sr)
 
