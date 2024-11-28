@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-28
+
 ### Added
 
 - Core DSP: framing/windowing, STFT, mel filterbanks, log-mel, MFCC, deltas, and
@@ -19,4 +21,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Synthetic scene generator and event-list I/O (CSV / JSON).
 - `resona` command-line interface: `info`, `embed`, `detect`, `evaluate`.
 
-[Unreleased]: https://github.com/hazelp343/resona/commits/main
+[Unreleased]: https://github.com/hazelp343/resona/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/hazelp343/resona/releases/tag/v0.1.0
