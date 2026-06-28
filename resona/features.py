@@ -46,8 +46,12 @@ def stft(
 
     if center:
         pad = n_fft // 2
-        mode = "reflect" if sig.shape[0] > pad else "constant"
-        sig = np.pad(sig, pad, mode=mode)
+        # Reflect padding needs at least ``pad`` samples to mirror; fall back to
+        # zero padding for very short inputs.
+        if sig.shape[0] > pad:
+            sig = np.pad(sig, pad, mode="reflect")
+        else:
+            sig = np.pad(sig, pad, mode="constant")
 
     win = get_window(window, n_fft, periodic=True)
     frames = frame_signal(sig, n_fft, hop_length, pad=True)
