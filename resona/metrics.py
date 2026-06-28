@@ -108,3 +108,90 @@ def segment_based_metrics(
         "n_sys": float(n_sys),
         "n_correct": float(n_correct),
     }
+
+
+def _events_match(
+    ref: Event, est: Event, t_collar: float, percentage_of_length: float
+) -> bool:
+    """Whether ``est`` matches ``ref`` under the onset collar and offset tolerance."""
+    onset_ok = abs(ref.onset - est.onset) <= t_collar
+    offset_tolerance = max(t_collar, percentage_of_length * ref.duration)
+    offset_ok = abs(ref.offset - est.offset) <= offset_tolerance
+    return onset_ok and offset_ok
+
+
+def _max_bipartite_matching(adjacency: list[list[int]], n_right: int) -> int:
+    """Size of the maximum matching via Kuhn's augmenting-path algorithm.
+
+    ``adjacency[i]`` lists the right-hand nodes that left node ``i`` may match.
+    Optimal matching (rather than greedy) ensures the true-positive count does
+    not depend on the order events happen to be listed in.
+    """
+    match_right = [-1] * n_right
+
+    def augment(left: int, visited: list[bool]) -> bool:
+        for right in adjacency[left]:
+            if not visited[right]:
+                visited[right] = True
+                if match_right[right] == -1 or augment(match_right[right], visited):
+                    match_right[right] = left
+                    return True
+        return False
+
+    matched = 0
+    for left in range(len(adjacency)):
+        if augment(left, [False] * n_right):
+            matched += 1
+    return matched
+
+
+def event_based_metrics(
+    reference: list[Event],
+    estimated: list[Event],
+    *,
+    labels: list[str] | None = None,
+    t_collar: float = DEFAULT_T_COLLAR,
+    percentage_of_length: float = DEFAULT_PERCENTAGE_OF_LENGTH,
+) -> dict[str, float]:
+    """Event-based precision/recall/F and error rate.
+
+    Matching is label-constrained: an estimate may only match a reference event
+    with the same label whose onset falls within ``t_collar`` seconds and whose
+    offset falls within ``max(t_collar, percentage_of_length * length)`` seconds.
+    Mislabelled-but-well-timed events therefore surface as a deletion/insertion
+    pair rather than as a substitution.
+    """
+    reference = list(reference)
+    estimated = list(estimated)
+    labels = _resolve_labels(reference, estimated, labels)
+
+    n_ref = 0
+    n_sys = 0
+    n_correct = 0
+    for label in labels:
+        ref_events = [e for e in reference if e.label == label]
+        sys_events = [e for e in estimated if e.label == label]
+        n_ref += len(ref_events)
+        n_sys += len(sys_events)
+        adjacency = [
+            [j for j, s in enumerate(sys_events) if _events_match(r, s, t_collar, percentage_of_length)]
+            for r in ref_events
+        ]
+        n_correct += _max_bipartite_matching(adjacency, len(sys_events))
+
+    deletions = n_ref - n_correct
+    insertions = n_sys - n_correct
+    precision, recall, f_measure = _prf(n_ref, n_sys, n_correct)
+    denom = float(n_ref) if n_ref else 1.0
+    return {
+        "precision": precision,
+        "recall": recall,
+        "f_measure": f_measure,
+        "error_rate": (deletions + insertions) / denom,
+        "substitution_rate": 0.0,
+        "deletion_rate": deletions / denom,
+        "insertion_rate": insertions / denom,
+        "n_ref": float(n_ref),
+        "n_sys": float(n_sys),
+        "n_correct": float(n_correct),
+    }
