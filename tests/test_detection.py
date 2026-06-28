@@ -94,3 +94,20 @@ def test_threshold_detector_multilabel() -> None:
     detector = ThresholdDetector(threshold=0.5)
     events = detector.detect(activations, labels=["a", "b"], sr=100, hop_length=1)
     assert sorted(event.label for event in events) == ["a", "b"]
+
+
+def test_short_event_below_min_duration_is_dropped() -> None:
+    # Regression: a single-frame blip must not survive a 3-frame minimum, while a
+    # 5-frame event clears the same bar.
+    activations = np.zeros((30, 1))
+    activations[10, 0] = 1.0
+    dropped = pp.activations_to_events(
+        activations, ["x"], sr=100, hop_length=1, threshold=0.5, min_duration_on=0.03
+    )
+    assert dropped == []
+
+    activations[20:25, 0] = 1.0
+    kept = pp.activations_to_events(
+        activations, ["x"], sr=100, hop_length=1, threshold=0.5, min_duration_on=0.03
+    )
+    assert len(kept) == 1
