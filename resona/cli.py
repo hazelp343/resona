@@ -6,9 +6,11 @@ import argparse
 
 import numpy as np
 
+from .detection.events import Event
 from .embeddings import available_embedders
+from .eventio import save_events
 from .io import load_audio
-from .pipeline import extract_embedding
+from .pipeline import detect_events, extract_embedding
 
 
 def _cmd_info(args: argparse.Namespace) -> int:
@@ -33,6 +35,29 @@ def _cmd_embed(args: argparse.Namespace) -> int:
     output = embedding.pooled() if args.pooled else embedding.vectors
     np.save(args.output, output)
     print(f"saved {embedding.name} embedding {output.shape} to {args.output}")
+    return 0
+
+
+def _cmd_detect(args: argparse.Namespace) -> int:
+    signal, sr = load_audio(args.audio, sr=args.sr)
+    events = detect_events(
+        signal,
+        sr,
+        detector=args.detector,
+        threshold=args.threshold,
+        n_fft=args.n_fft,
+        hop_length=args.hop_length,
+        min_duration_on=args.min_duration_on,
+        min_duration_off=args.min_duration_off,
+    )
+    if args.output:
+        save_events(args.output, events)
+        print(f"detected {len(events)} event(s) -> {args.output}")
+    else:
+        for event in events:
+            print(
+                f"{event.onset:.3f}\t{event.offset:.3f}\t{event.label}\t{event.score:.3f}"
+            )
     return 0
 
 
@@ -65,6 +90,34 @@ def build_parser() -> argparse.ArgumentParser:
         help="Save a single mean-pooled vector instead of the per-window matrix.",
     )
     embed.set_defaults(func=_cmd_embed)
+
+    detect = subparsers.add_parser("detect", help="Detect sound events in audio.")
+    detect.add_argument("audio", help="Path to an audio file.")
+    detect.add_argument("--detector", default="energy", help="Detector to use.")
+    detect.add_argument("--threshold", type=float, default=0.5, help="Decision threshold.")
+    detect.add_argument("--n-fft", type=int, default=2048, dest="n_fft", help="FFT size.")
+    detect.add_argument(
+        "--hop-length", type=int, default=512, dest="hop_length", help="Frame hop."
+    )
+    detect.add_argument(
+        "--min-duration-on",
+        type=float,
+        default=0.0,
+        dest="min_duration_on",
+        help="Discard events shorter than this (seconds).",
+    )
+    detect.add_argument(
+        "--min-duration-off",
+        type=float,
+        default=0.0,
+        dest="min_duration_off",
+        help="Bridge gaps shorter than this (seconds).",
+    )
+    detect.add_argument(
+        "--output", "-o", default=None, help="Write events here; otherwise print them."
+    )
+    detect.add_argument("--sr", type=int, default=None, help="Resample before detecting.")
+    detect.set_defaults(func=_cmd_detect)
 
     return parser
 
