@@ -6,7 +6,9 @@ import argparse
 
 import numpy as np
 
+from .embeddings import available_embedders
 from .io import load_audio
+from .pipeline import extract_embedding
 
 
 def _cmd_info(args: argparse.Namespace) -> int:
@@ -23,6 +25,17 @@ def _cmd_info(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_embed(args: argparse.Namespace) -> int:
+    signal, sr = load_audio(args.audio, sr=args.sr)
+    embedding = extract_embedding(
+        signal, sr, embedder=args.embedder, sample_rate=sr
+    )
+    output = embedding.pooled() if args.pooled else embedding.vectors
+    np.save(args.output, output)
+    print(f"saved {embedding.name} embedding {output.shape} to {args.output}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Construct the top-level argument parser."""
     parser = argparse.ArgumentParser(
@@ -35,6 +48,23 @@ def build_parser() -> argparse.ArgumentParser:
     info.add_argument("audio", help="Path to an audio file.")
     info.add_argument("--sr", type=int, default=None, help="Resample before analysis.")
     info.set_defaults(func=_cmd_info)
+
+    embed = subparsers.add_parser("embed", help="Extract an embedding to a .npy file.")
+    embed.add_argument("audio", help="Path to an audio file.")
+    embed.add_argument(
+        "--embedder",
+        default="logmel",
+        choices=available_embedders(),
+        help="Which embedder to use.",
+    )
+    embed.add_argument("--output", "-o", required=True, help="Destination .npy path.")
+    embed.add_argument("--sr", type=int, default=None, help="Resample before embedding.")
+    embed.add_argument(
+        "--pooled",
+        action="store_true",
+        help="Save a single mean-pooled vector instead of the per-window matrix.",
+    )
+    embed.set_defaults(func=_cmd_embed)
 
     return parser
 
