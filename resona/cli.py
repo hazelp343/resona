@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 
 import numpy as np
 
 from .detection.events import Event
 from .embeddings import available_embedders
-from .eventio import save_events
+from .eventio import load_events, save_events
 from .io import load_audio
-from .pipeline import detect_events, extract_embedding
+from .pipeline import detect_events, evaluate, extract_embedding
 
 
 def _cmd_info(args: argparse.Namespace) -> int:
@@ -61,7 +62,17 @@ def _cmd_detect(args: argparse.Namespace) -> int:
     return 0
 
 
-def build_parser() -> argparse.ArgumentParser:
+def _cmd_evaluate(args: argparse.Namespace) -> int:
+    reference = load_events(args.reference)
+    estimated = load_events(args.estimated)
+    extra = (
+        {"time_resolution": args.time_resolution}
+        if args.mode == "segment"
+        else {"t_collar": args.t_collar}
+    )
+    scores = evaluate(reference, estimated, mode=args.mode, **extra)
+    print(json.dumps(scores, indent=2))
+    return 0
     """Construct the top-level argument parser."""
     parser = argparse.ArgumentParser(
         prog="resona",
@@ -118,6 +129,30 @@ def build_parser() -> argparse.ArgumentParser:
     )
     detect.add_argument("--sr", type=int, default=None, help="Resample before detecting.")
     detect.set_defaults(func=_cmd_detect)
+
+    evaluate_cmd = subparsers.add_parser(
+        "evaluate", help="Score detected events against a reference."
+    )
+    evaluate_cmd.add_argument("--reference", "-r", required=True, help="Reference events.")
+    evaluate_cmd.add_argument("--estimated", "-e", required=True, help="Estimated events.")
+    evaluate_cmd.add_argument(
+        "--mode", default="segment", choices=("segment", "event"), help="Metric family."
+    )
+    evaluate_cmd.add_argument(
+        "--time-resolution",
+        type=float,
+        default=1.0,
+        dest="time_resolution",
+        help="Segment length in seconds (segment mode).",
+    )
+    evaluate_cmd.add_argument(
+        "--t-collar",
+        type=float,
+        default=0.2,
+        dest="t_collar",
+        help="Onset collar in seconds (event mode).",
+    )
+    evaluate_cmd.set_defaults(func=_cmd_evaluate)
 
     return parser
 
