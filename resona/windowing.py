@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ._typing import FloatArray
+from ._typing import FloatArray, IntArray
 from .exceptions import InvalidParameterError
 
 # Window tapers we know how to build. ``get_window`` is the public entry point;
@@ -116,3 +116,28 @@ def frame_signal(
         signal, shape=(count, frame_length), strides=strides
     )
     return np.array(frames, dtype=np.float64)
+
+
+def frames_to_samples(frames: IntArray | int, hop_length: int) -> IntArray:
+    """Map frame indices to the sample offset at which each frame starts."""
+    return np.atleast_1d(np.asarray(frames)).astype(np.int_) * int(hop_length)
+
+
+def samples_to_frames(samples: IntArray | int, hop_length: int) -> IntArray:
+    """Map sample offsets to the frame index that contains them."""
+    return np.atleast_1d(np.asarray(samples)).astype(np.int_) // int(hop_length)
+
+
+def frames_to_time(
+    frames: IntArray | int, sr: int, hop_length: int
+) -> FloatArray:
+    """Map frame indices to the start time (seconds) of each frame."""
+    return frames_to_samples(frames, hop_length).astype(np.float64) / float(sr)
+
+
+def time_to_frames(
+    times: FloatArray | float, sr: int, hop_length: int
+) -> IntArray:
+    """Map times (seconds) to the index of the frame that contains them."""
+    samples = np.atleast_1d(np.asarray(times, dtype=np.float64)) * float(sr)
+    return np.floor(samples / float(hop_length)).astype(np.int_)
