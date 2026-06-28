@@ -1,5 +1,4 @@
 import pytest
-
 from resona.datasets import Scene
 from resona.embeddings import available_embedders, create_embedder, get_embedder
 from resona.exceptions import InvalidParameterError, UnknownComponentError

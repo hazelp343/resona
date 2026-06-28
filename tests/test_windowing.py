@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from resona import windowing
 from resona.exceptions import InvalidParameterError
 

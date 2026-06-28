@@ -1,8 +1,8 @@
 from resona import detect_events, evaluate, extract_embedding
 from resona.cli import build_parser, main
 from resona.datasets import Scene
-from resona.detection.events import Event
 from resona.detection.eventio import save_events
+from resona.detection.events import Event
 from resona.io import write_wav
 
 
@@ -13,9 +13,7 @@ def test_build_parser_has_info_subcommand() -> None:
 
 
 def test_pipeline_extract_and_detect(scene: Scene) -> None:
-    embedding = extract_embedding(
-        scene.audio, scene.sr, embedder="logmel", sample_rate=scene.sr
-    )
+    embedding = extract_embedding(scene.audio, scene.sr, embedder="logmel", sample_rate=scene.sr)
     assert embedding.n_windows > 0
     events = detect_events(scene.audio, scene.sr, threshold=0.3)
     assert isinstance(events, list)
@@ -42,7 +40,16 @@ def test_cli_detect_then_evaluate(tmp_path, scene: Scene) -> None:
     estimated = tmp_path / "est.csv"
 
     rc = main(
-        ["detect", str(clip), "--threshold", "0.3", "--min-duration-on", "0.1", "-o", str(estimated)]
+        [
+            "detect",
+            str(clip),
+            "--threshold",
+            "0.3",
+            "--min-duration-on",
+            "0.1",
+            "-o",
+            str(estimated),
+        ]
     )
     assert rc == 0
     assert estimated.exists()
