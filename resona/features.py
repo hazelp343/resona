@@ -188,3 +188,47 @@ def power_to_db(
         if log_spec.size:
             log_spec = np.maximum(log_spec, log_spec.max() - top_db)
     return log_spec
+
+
+def dct_matrix(n_input: int, n_output: int) -> FloatArray:
+    """Orthonormal type-II DCT basis of shape ``(n_output, n_input)``.
+
+    Multiplying a feature matrix ``(n_frames, n_input)`` by ``basis.T`` projects
+    each frame onto its first ``n_output`` cosine components -- the standard way
+    to decorrelate log-mel energies into cepstral coefficients.
+    """
+    if n_input <= 0 or n_output <= 0:
+        raise InvalidParameterError("n_input and n_output must be positive")
+    basis = np.empty((n_output, n_input), dtype=np.float64)
+    basis[0] = 1.0 / np.sqrt(n_input)
+    samples = (2.0 * np.arange(n_input) + 1.0) * np.pi / (2.0 * n_input)
+    for k in range(1, n_output):
+        basis[k] = np.cos(k * samples) * np.sqrt(2.0 / n_input)
+    return basis
+
+
+def mfcc(
+    signal: FloatArray,
+    sr: int,
+    *,
+    n_mfcc: int = 13,
+    n_fft: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    n_mels: int = DEFAULT_N_MELS,
+    fmin: float = 0.0,
+    fmax: float | None = None,
+) -> FloatArray:
+    """Mel-frequency cepstral coefficients of shape ``(n_frames, n_mfcc)``."""
+    log_mel = power_to_db(
+        melspectrogram(
+            signal,
+            sr,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            n_mels=n_mels,
+            fmin=fmin,
+            fmax=fmax,
+        )
+    )
+    basis = dct_matrix(n_mels, n_mfcc)
+    return log_mel @ basis.T
