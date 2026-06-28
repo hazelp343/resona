@@ -16,8 +16,8 @@ import csv
 import json
 import os
 
-from .detection.events import Event
-from .exceptions import AudioIOError, InvalidParameterError
+from ..exceptions import AudioIOError, InvalidParameterError
+from .events import Event
 
 _FIELDS = ("onset", "offset", "label", "score")
 
