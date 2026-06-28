@@ -25,16 +25,16 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Typing :: Typed",
 ]
-dependencies = ["numpy>=1.22"]
+dependencies = ["numpy>=2.2.6"]
 
 [project.optional-dependencies]
-soundfile = ["soundfile>=0.12"]
+soundfile = ["soundfile>=0.14.0"]
 dev = [
-  "pytest>=7.0",
-  "pytest-cov>=4.0",
-  "ruff>=0.4",
-  "mypy>=1.8",
-  "pre-commit>=3.0",
+  "pytest>=9.1.1",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.15.20",
+  "mypy>=2.1.0",
+  "pre-commit>=4.6.0",
 ]
 
 [project.scripts]
