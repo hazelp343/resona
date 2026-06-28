@@ -342,8 +342,8 @@ def spectral_rolloff(
     center: bool = True,
     roll_percent: float = 0.85,
 ) -> FloatArray:
-    """Per-frame roll-off frequency: the bin below which ``roll_percent`` of the
-    spectral energy lies."""
+    """Per-frame roll-off frequency: the frequency below which ``roll_percent``
+    of the spectral energy lies."""
     if not 0.0 < roll_percent < 1.0:
         raise InvalidParameterError("roll_percent must be in (0, 1)")
     mag, freqs = _mag_and_freqs(signal, sr, n_fft, hop_length, window, center)
