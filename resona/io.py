@@ -12,7 +12,7 @@ import wave
 import numpy as np
 
 from ._typing import FloatArray
-from .exceptions import AudioIOError
+from .exceptions import AudioIOError, InvalidParameterError
 
 # Sample widths (bytes per sample) the stdlib WAV reader can decode.
 _SUPPORTED_SAMPLE_WIDTHS = (1, 2, 3, 4)
@@ -56,3 +56,17 @@ def read_wav(path: str) -> tuple[FloatArray, int]:
     flat = _decode_pcm(raw, sample_width)
     data = flat.reshape(-1, n_channels)
     return data, sample_rate
+
+
+def to_mono(signal: FloatArray) -> FloatArray:
+    """Collapse a multi-channel signal to mono by averaging channels.
+
+    Accepts a 1-D array (returned unchanged) or a 2-D ``(n_samples, n_channels)``
+    array with channels in the last axis -- the layout :func:`read_wav` produces.
+    """
+    x = np.asarray(signal, dtype=np.float64)
+    if x.ndim == 1:
+        return x
+    if x.ndim == 2:
+        return x.mean(axis=1)
+    raise InvalidParameterError("signal must be 1-D or 2-D (n_samples, n_channels)")
