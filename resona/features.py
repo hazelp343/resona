@@ -88,3 +88,15 @@ def spectrogram(
     if power == 1.0:
         return mag
     return mag**power
+
+
+def hz_to_mel(frequencies: FloatArray | float) -> FloatArray:
+    """Convert frequencies in hertz to the HTK mel scale."""
+    freq = np.asarray(frequencies, dtype=np.float64)
+    return 2595.0 * np.log10(1.0 + freq / 700.0)
+
+
+def mel_to_hz(mels: FloatArray | float) -> FloatArray:
+    """Inverse of :func:`hz_to_mel` (HTK mel scale)."""
+    mel = np.asarray(mels, dtype=np.float64)
+    return 700.0 * (10.0 ** (mel / 2595.0) - 1.0)
