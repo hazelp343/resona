@@ -43,11 +43,6 @@ def binarize(activations: FloatArray, threshold: float) -> BoolArray:
     return np.asarray(activations, dtype=np.float64) >= threshold
 
 
-def _frames_to_seconds(frames: int, sr: int, hop_length: int) -> float:
-    """Convert a frame count to its duration in seconds."""
-    return frames * hop_length / sr
-
-
 def apply_min_duration(
     roll: BoolArray,
     *,
