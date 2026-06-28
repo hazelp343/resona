@@ -29,9 +29,7 @@ def _cmd_info(args: argparse.Namespace) -> int:
 
 def _cmd_embed(args: argparse.Namespace) -> int:
     signal, sr = load_audio(args.audio, sr=args.sr)
-    embedding = extract_embedding(
-        signal, sr, embedder=args.embedder, sample_rate=sr
-    )
+    embedding = extract_embedding(signal, sr, embedder=args.embedder, sample_rate=sr)
     output = embedding.pooled() if args.pooled else embedding.vectors
     np.save(args.output, output)
     print(f"saved {embedding.name} embedding {output.shape} to {args.output}")
@@ -55,9 +53,7 @@ def _cmd_detect(args: argparse.Namespace) -> int:
         print(f"detected {len(events)} event(s) -> {args.output}")
     else:
         for event in events:
-            print(
-                f"{event.onset:.3f}\t{event.offset:.3f}\t{event.label}\t{event.score:.3f}"
-            )
+            print(f"{event.onset:.3f}\t{event.offset:.3f}\t{event.label}\t{event.score:.3f}")
     return 0
 
 

@@ -89,7 +89,7 @@ def resample(signal: FloatArray, sr_in: int, sr_out: int) -> FloatArray:
 
     # Clamp to at least one output sample so a very short clip never collapses
     # to an empty array when downsampling.
-    n_out = max(1, int(round(x.size * sr_out / sr_in)))
+    n_out = max(1, round(x.size * sr_out / sr_in))
     t_old = np.arange(x.size, dtype=np.float64) / float(sr_in)
     t_new = np.arange(n_out, dtype=np.float64) / float(sr_out)
     return np.interp(t_new, t_old, x)
@@ -111,9 +111,7 @@ def _read_soundfile(path: str) -> tuple[FloatArray, int]:
     return np.asarray(data, dtype=np.float64), int(sr)
 
 
-def load_audio(
-    path: str, *, sr: int | None = None, mono: bool = True
-) -> tuple[FloatArray, int]:
+def load_audio(path: str, *, sr: int | None = None, mono: bool = True) -> tuple[FloatArray, int]:
     """Load an audio file, optionally downmixing to mono and resampling.
 
     WAV files are decoded with the standard library; everything else is routed

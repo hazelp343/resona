@@ -28,9 +28,7 @@ class Event:
 
     def __post_init__(self) -> None:
         if self.offset < self.onset:
-            raise InvalidParameterError(
-                f"event offset {self.offset} precedes onset {self.onset}"
-            )
+            raise InvalidParameterError(f"event offset {self.offset} precedes onset {self.onset}")
 
     @property
     def duration(self) -> float:
@@ -88,9 +86,7 @@ def events_to_roll(
     return roll, list(labels)
 
 
-def roll_to_events(
-    roll: BoolArray, *, sr: int, hop_length: int, labels: list[str]
-) -> list[Event]:
+def roll_to_events(roll: BoolArray, *, sr: int, hop_length: int, labels: list[str]) -> list[Event]:
     """Inverse of :func:`events_to_roll`: contiguous active runs become events."""
     frame_duration = hop_length / sr
     events: list[Event] = []

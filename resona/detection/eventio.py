@@ -84,6 +84,7 @@ def load_events(path: str, *, fmt: str | None = None) -> list[Event]:
         records = json.loads(text)
         return [_row_to_event({k: str(v) for k, v in rec.items()}) for rec in records]
 
-    delimiter = "\t" if "\t" in text.splitlines()[0] else "," if text.strip() else ","
-    reader = csv.DictReader(text.splitlines(), delimiter=delimiter)
+    lines = text.splitlines()
+    delimiter = "\t" if lines and "\t" in lines[0] else ","
+    reader = csv.DictReader(lines, delimiter=delimiter)
     return [_row_to_event(row) for row in reader]

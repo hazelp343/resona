@@ -107,8 +107,8 @@ class BaseEmbedder(ABC):
             return np.zeros((0, out_dim)), np.zeros((0,))
 
         frame_hop_s = self.hop_length / self.sample_rate
-        win = max(1, int(round(self.window_seconds / frame_hop_s)))
-        hop = max(1, int(round(self.hop_seconds / frame_hop_s)))
+        win = max(1, round(self.window_seconds / frame_hop_s))
+        hop = max(1, round(self.hop_seconds / frame_hop_s))
         if n_frames <= win:
             starts = [0]
             win = n_frames

@@ -57,8 +57,8 @@ def apply_min_duration(
     two), then runs shorter than ``min_duration_on`` are discarded.
     """
     frame_rate = sr / hop_length
-    min_on = int(round(min_duration_on * frame_rate))
-    min_off = int(round(min_duration_off * frame_rate))
+    min_on = round(min_duration_on * frame_rate)
+    min_off = round(min_duration_off * frame_rate)
 
     out = np.array(roll, dtype=bool)
     n_frames = out.shape[0]

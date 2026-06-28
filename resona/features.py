@@ -263,8 +263,7 @@ def delta(features: FloatArray, *, width: int = 9, order: int = 1) -> FloatArray
         result = np.zeros_like(out)
         for n in range(1, half + 1):
             result += n * (
-                padded[half + n : half + n + n_frames]
-                - padded[half - n : half - n + n_frames]
+                padded[half + n : half + n + n_frames] - padded[half - n : half - n + n_frames]
             )
         out = result / denom
     return out

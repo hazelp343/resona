@@ -20,7 +20,7 @@ from .exceptions import InvalidParameterError
 def _n_samples(duration: float, sr: int) -> int:
     if duration < 0 or sr <= 0:
         raise InvalidParameterError("duration must be >= 0 and sr > 0")
-    return int(round(duration * sr))
+    return round(duration * sr)
 
 
 def tone(
@@ -100,10 +100,8 @@ def synthetic_scene(
         label = names[int(rng.integers(len(names)))]
         event_duration = float(rng.uniform(0.2, 0.6))
         onset = float(rng.uniform(0.0, max(1e-3, duration - event_duration)))
-        burst = _apply_fade(
-            tone(palette[label], event_duration, sr=sr, amplitude=0.4), sr
-        )
-        start = int(round(onset * sr))
+        burst = _apply_fade(tone(palette[label], event_duration, sr=sr, amplitude=0.4), sr)
+        start = round(onset * sr)
         end = min(n, start + burst.size)
         audio[start:end] += burst[: end - start]
         events.append(Event(onset=onset, offset=onset + event_duration, label=label))
