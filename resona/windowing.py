@@ -58,3 +58,61 @@ def get_window(name: str, length: int, *, periodic: bool = True) -> FloatArray:
     raise InvalidParameterError(
         f"unknown window {name!r}; choose one of {', '.join(_WINDOW_NAMES)}"
     )
+
+
+def num_frames(
+    n_samples: int, frame_length: int, hop_length: int, *, pad: bool = True
+) -> int:
+    """Number of frames produced by :func:`frame_signal`.
+
+    With ``pad=False`` only complete frames are counted. With ``pad=True`` the
+    signal is conceptually zero-padded at the end so that every sample falls in
+    at least one frame.
+    """
+    if frame_length <= 0 or hop_length <= 0:
+        raise InvalidParameterError("frame_length and hop_length must be positive")
+    if n_samples <= 0:
+        return 0
+    if pad:
+        return max(1, int(np.ceil((n_samples - frame_length) / hop_length)) + 1)
+    if n_samples < frame_length:
+        return 0
+    return 1 + (n_samples - frame_length) // hop_length
+
+
+def frame_signal(
+    signal: FloatArray,
+    frame_length: int,
+    hop_length: int,
+    *,
+    pad: bool = True,
+    pad_mode: str = "constant",
+) -> FloatArray:
+    """Split ``signal`` into overlapping frames.
+
+    Returns a *time-major* array of shape ``(n_frames, frame_length)``. Frame
+    ``i`` covers ``signal[i * hop_length : i * hop_length + frame_length]``.
+    When ``pad`` is set the signal is padded at the end so the final, otherwise
+    partial, frame is preserved.
+    """
+    signal = np.asarray(signal, dtype=np.float64)
+    if signal.ndim != 1:
+        raise InvalidParameterError("signal must be one-dimensional")
+    if frame_length <= 0 or hop_length <= 0:
+        raise InvalidParameterError("frame_length and hop_length must be positive")
+
+    n = int(signal.shape[0])
+    count = num_frames(n, frame_length, hop_length, pad=pad)
+    if count == 0:
+        return np.empty((0, frame_length), dtype=np.float64)
+
+    needed = (count - 1) * hop_length + frame_length
+    if needed > n:
+        signal = np.pad(signal, (0, needed - n), mode=pad_mode)
+
+    # Build the frames with a strided view, then copy so callers can mutate.
+    strides = (signal.strides[0] * hop_length, signal.strides[0])
+    frames = np.lib.stride_tricks.as_strided(
+        signal, shape=(count, frame_length), strides=strides
+    )
+    return np.array(frames, dtype=np.float64)
