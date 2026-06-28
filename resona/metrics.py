@@ -14,10 +14,13 @@ substitutions, deletions, and insertions.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from ._typing import BoolArray
 from .detection.events import Event
+from .exceptions import InvalidParameterError
 
 #: Default segment length (seconds) for segment-based metrics.
 DEFAULT_TIME_RESOLUTION = 1.0
@@ -195,3 +198,24 @@ def event_based_metrics(
         "n_sys": float(n_sys),
         "n_correct": float(n_correct),
     }
+
+
+def error_rate(
+    reference: list[Event],
+    estimated: list[Event],
+    *,
+    mode: str = "segment",
+    **kwargs: Any,
+) -> float:
+    """Return just the error rate under the chosen ``mode``.
+
+    A thin convenience over :func:`segment_based_metrics` /
+    :func:`event_based_metrics` for callers that only care about the single
+    headline number. Extra keyword arguments are forwarded to the underlying
+    metric (e.g. ``time_resolution`` or ``t_collar``).
+    """
+    if mode == "segment":
+        return segment_based_metrics(reference, estimated, **kwargs)["error_rate"]
+    if mode == "event":
+        return event_based_metrics(reference, estimated, **kwargs)["error_rate"]
+    raise InvalidParameterError(f"unknown mode {mode!r}; use 'segment' or 'event'")
