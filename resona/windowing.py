@@ -102,6 +102,9 @@ def frame_signal(
         raise InvalidParameterError("frame_length and hop_length must be positive")
 
     n = int(signal.shape[0])
+    if n == 0:
+        # Nothing to frame; skip the stride trick entirely.
+        return np.empty((0, frame_length), dtype=np.float64)
     count = num_frames(n, frame_length, hop_length, pad=pad)
     if count == 0:
         return np.empty((0, frame_length), dtype=np.float64)
