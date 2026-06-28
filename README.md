@@ -1,5 +1,10 @@
 # resona
 
+[![CI](https://github.com/hazelp343/resona/actions/workflows/ci.yml/badge.svg)](https://github.com/hazelp343/resona/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Code style: ruff](https://img.shields.io/badge/style-ruff-261230)](https://github.com/astral-sh/ruff)
+
 **Audio embeddings and sound-event detection, in plain NumPy.**
 
 resona turns audio into things you can actually use: fixed-length **embeddings**
@@ -76,6 +81,22 @@ resona evaluate --reference truth.csv --estimated events.csv --mode event
 
 Early days (`0.x`): the API may still shift between minor versions. It is tested
 on CPython 3.9–3.12.
+
+## Performance
+
+resona is built for clarity first, but the NumPy core is vectorised and fast
+enough for interactive work: extracting log-mel embeddings from a few minutes of
+audio is a sub-second operation on a laptop. The spectral-feature embedder
+recomputes an STFT per descriptor, so for large batches prefer the `logmel` or
+`mfcc` embedders. There are no learned weights to download — everything runs on
+CPU from a cold start.
+
+## Documentation
+
+- [Usage guide](docs/usage.md)
+- [Architecture](docs/architecture.md)
+- [Design notes](docs/design-notes.md)
+- [API reference](docs/api-reference.md)
 
 ## License
 
