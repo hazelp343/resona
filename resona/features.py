@@ -326,3 +326,71 @@ def spectral_bandwidth(
     centroid = (mag @ freqs) / safe
     deviation = np.abs(freqs[np.newaxis, :] - centroid[:, np.newaxis]) ** p
     return ((mag * deviation).sum(axis=1) / safe) ** (1.0 / p)
+
+
+def spectral_rolloff(
+    signal: FloatArray,
+    sr: int,
+    *,
+    n_fft: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    window: str = "hann",
+    center: bool = True,
+    roll_percent: float = 0.85,
+) -> FloatArray:
+    """Per-frame roll-off frequency: the bin below which ``roll_percent`` of the
+    spectral energy lies."""
+    if not 0.0 < roll_percent < 1.0:
+        raise InvalidParameterError("roll_percent must be in (0, 1)")
+    mag, freqs = _mag_and_freqs(signal, sr, n_fft, hop_length, window, center)
+    cumulative = np.cumsum(mag, axis=1)
+    threshold = roll_percent * cumulative[:, -1:]
+    # First bin whose cumulative energy reaches the threshold, per frame.
+    reached = cumulative >= threshold
+    idx = np.argmax(reached, axis=1)
+    return freqs[idx]
+
+
+def spectral_flatness(
+    signal: FloatArray,
+    *,
+    n_fft: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    window: str = "hann",
+    center: bool = True,
+    amin: float = 1e-10,
+) -> FloatArray:
+    """Per-frame spectral flatness (Wiener entropy) in ``[0, 1]``.
+
+    The ratio of the geometric to the arithmetic mean of the power spectrum:
+    tonal frames score near 0, noisy frames near 1.
+    """
+    power = spectrogram(
+        signal, n_fft=n_fft, hop_length=hop_length, window=window, center=center, power=2.0
+    )
+    power = np.maximum(power, amin)
+    geometric = np.exp(np.mean(np.log(power), axis=1))
+    arithmetic = np.mean(power, axis=1)
+    return geometric / arithmetic
+
+
+def spectral_flux(
+    signal: FloatArray,
+    *,
+    n_fft: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    window: str = "hann",
+    center: bool = True,
+) -> FloatArray:
+    """Per-frame spectral flux: the L2 change of the L1-normalised magnitude
+    spectrum between consecutive frames. The first frame is defined as 0."""
+    mag = spectrogram(
+        signal, n_fft=n_fft, hop_length=hop_length, window=window, center=center, power=1.0
+    )
+    if mag.shape[0] == 0:
+        return np.empty((0,), dtype=np.float64)
+    totals = mag.sum(axis=1, keepdims=True)
+    normed = mag / np.where(totals > 0.0, totals, 1.0)
+    diff = np.diff(normed, axis=0)
+    flux = np.sqrt((diff**2).sum(axis=1))
+    return np.concatenate([[0.0], flux])
