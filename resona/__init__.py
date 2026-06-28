@@ -35,7 +35,7 @@ from .pipeline import detect_events, evaluate, extract_embedding
 try:
     __version__ = _metadata.version("resona")
 except _metadata.PackageNotFoundError:  # pragma: no cover - running from a source tree
-    __version__ = "0.0.0"
+    __version__ = "0.1.0"
 
 __all__ = [
     "AudioIOError",
