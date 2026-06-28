@@ -161,3 +161,30 @@ def melspectrogram(
     spec = spectrogram(signal, n_fft=n_fft, hop_length=hop_length, power=power)
     fb = mel_filterbank(sr, n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax)
     return spec @ fb.T
+
+
+def power_to_db(
+    spec: FloatArray,
+    *,
+    ref: float = 1.0,
+    amin: float = 1e-10,
+    top_db: float | None = 80.0,
+) -> FloatArray:
+    """Convert a power spectrogram to a decibel (log) scale.
+
+    ``ref`` is the reference power that maps to 0 dB; pass ``float(spec.max())``
+    for a peak-normalised result. Values are floored at ``amin`` before the
+    logarithm, and -- when ``top_db`` is given -- clipped to at most ``top_db``
+    below the per-array peak.
+    """
+    if amin <= 0:
+        raise InvalidParameterError("amin must be positive")
+    magnitude = np.abs(np.asarray(spec, dtype=np.float64))
+    log_spec = 10.0 * np.log10(np.maximum(amin, magnitude))
+    log_spec -= 10.0 * np.log10(np.maximum(amin, ref))
+    if top_db is not None:
+        if top_db < 0:
+            raise InvalidParameterError("top_db must be non-negative")
+        if log_spec.size:
+            log_spec = np.maximum(log_spec, log_spec.max() - top_db)
+    return log_spec
