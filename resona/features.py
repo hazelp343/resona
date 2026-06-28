@@ -144,3 +144,20 @@ def mel_filterbank(
         enorm = 2.0 / (hz_edges[2 : n_mels + 2] - hz_edges[:n_mels])
         weights *= enorm[:, np.newaxis]
     return weights
+
+
+def melspectrogram(
+    signal: FloatArray,
+    sr: int,
+    *,
+    n_fft: int = DEFAULT_N_FFT,
+    hop_length: int = DEFAULT_HOP_LENGTH,
+    n_mels: int = DEFAULT_N_MELS,
+    fmin: float = 0.0,
+    fmax: float | None = None,
+    power: float = 2.0,
+) -> FloatArray:
+    """Mel-scaled spectrogram of shape ``(n_frames, n_mels)``."""
+    spec = spectrogram(signal, n_fft=n_fft, hop_length=hop_length, power=power)
+    fb = mel_filterbank(sr, n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax)
+    return spec @ fb.T
